@@ -1,20 +1,3 @@
-function createReservationDocument(
-  nameOfListing,
-  reservationDates,
-  reservationDetails
-) {
-  let reservation = {
-    name: nameOfListing,
-    dates: reservationDates,
-  };
-
-  for (const detail in reservationDetails) {
-    reservation[detail] = reservationDetails[detail];
-  }
-
-  return reservation;
-}
-
 async function createReservation(
   client,
   userEmail,
@@ -34,20 +17,18 @@ async function createReservation(
   );
 
   const session = client.startSession();
-  const transactionOption = {
+  const transactionOptions = {
     readPreference: "primary",
     readConcern: { level: "local" },
     writeConcern: { w: "majority" },
   };
 
   try {
-    const transactionResults = session.withTransaction(async () => {
+    const transactionResults = await session.withTransaction(async () => {
       const usersUpdatesResults = await usersCollection.updateOne(
-        {
-          email: userEmail,
-        },
+        { email: userEmail },
         { $addToSet: { reservations: reservation } },
-        session
+        { session }
       );
 
       console.log(
@@ -59,10 +40,7 @@ async function createReservation(
 
       const isListingReservedResults =
         await listingsAndReviewsCollection.findOne(
-          {
-            name: nameOfListing,
-            datesReserved: { $in: reservationDates },
-          },
+          { name: nameOfListing, datesReserved: { $in: reservationDates } },
           { session }
         );
 
@@ -91,7 +69,7 @@ async function createReservation(
       console.log(
         `${listingsAndReviewsUpdateResults.modifiedCount} document(s) was/were updated to include to reservation dates.`
       );
-    }, transactionOption);
+    }, transactionOptions);
 
     if (transactionResults) {
       console.log("The reservation was successfully created.");
@@ -105,4 +83,21 @@ async function createReservation(
   }
 }
 
-module.exports = createReservation;
+function createReservationDocument(
+  nameOfListing,
+  reservationDates,
+  reservationDetails
+) {
+  let reservation = {
+    name: nameOfListing,
+    dates: reservationDates,
+  };
+
+  for (const detail in reservationDetails) {
+    reservation[detail] = reservationDetails[detail];
+  }
+
+  return reservation;
+}
+
+module.exports = { createReservation };

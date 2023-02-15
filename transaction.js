@@ -1,18 +1,22 @@
+require("dotenv").config();
 const { MongoClient } = require("mongodb");
-const createReservation = require("./helper");
+const { createReservation } = require("./helper");
 
 async function main() {
-  const uri = "URI";
-  const client = new MongoClient(uri);
+  const uri = process.env.MONGO_URI;
+  const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
 
   try {
     await client.connect();
 
     await createReservation(
       client,
-      "resatyavcin@me.com",
+      "tom@me.com",
       "Infinite Views",
-      [new Date("2021-12-31"), new Date("2022-01-01")],
+      [new Date("2021-11-31"), new Date("2022-01-11")],
       {
         pricePerNight: 230,
         specialRequest: "Late Cehckout",
